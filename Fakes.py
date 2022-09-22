@@ -542,16 +542,8 @@ class DetermineEfficiencies():
 
             # Build PSFs
             for ii in np.arange(n_fake_images):
-                if len(fake_mags)==0:
-                    fake_mags = np.random.uniform(fake_mag_min,
-                        fake_mag_max, len(good_idx))
-                else:
-                    n_fake_mags = len(fake_mags)
-
-                    sampled=random.sample(range(len(fake_x)), n_fake_mags)
-                    print(sampled)
-                    fake_x = [fake_x[jj] for jj in sampled]
-                    fake_y = [fake_y[jj] for jj in sampled]
+                fake_mags = np.random.uniform(fake_mag_min,
+                    fake_mag_max, len(good_idx))
 
                 fake_image_file = file_association.fake_image_file[ii]
 

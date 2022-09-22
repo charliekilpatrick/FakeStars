@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import matplotlib
 
 matplotlib.use("Agg")
@@ -29,18 +30,6 @@ from scipy.interpolate import interp1d
 import warnings
 warnings.filterwarnings('ignore')
 
-bin_size = 0.2
-bright = 19
-dim = 24.0
-efficiency_magbins = np.linspace(bright, dim, int((dim - bright) / bin_size))
-fit_curve = True
-plot_points = True
-
-nbins=25
-model_mags = np.linspace(bright, dim, nbins)
-unrecovered_range = (bright, dim)
-unrecovered_range = efficiency_magbins
-
 def chi_square_s_curve(params, mag_bins=None, obs_efficiency=None):
         x0, a, n = params
         model_efficiency = self.limiting_mag_model(mag_bins, x0, a, n)
@@ -57,13 +46,14 @@ def chi_square_s_curve2(params, mag_bins, obs_efficiency):
 
         return residual
 
-def compute_efficiency(data, perform_fit=True):
+def compute_efficiency(data, model_mags, perform_fit=True):
 
     mag_cent = []
     mag_effi = []
     for i in np.arange(len(model_mags)-1):
             mag_lo = model_mags[i]
             mag_hi = model_mags[i+1]
+            print(mag_lo, mag_hi)
             mag_cent.append((mag_lo+mag_hi)/2.0)
             mask = (data['sim_mag']<mag_hi) & (data['sim_mag']>mag_lo)
 
@@ -172,7 +162,10 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files):
     return(outdata)
 
 def calculate_and_plot_efficiency(base_path, uniform_subdirs, snr, outimg,
-    outdatafile, dcmp_type="fake.dcmp", bright=19.0, dim=24.0, eff_target=0.5):
+    outdatafile, dcmp_type="fake.dcmp", bright=19.0, dim=24.0, bin_size=0.2,
+    eff_target=0.5):
+
+    model_mags = bright + bin_size*np.arange(int((dim-bright)/bin_size)+1)
 
     for sd in uniform_subdirs:
 
@@ -226,7 +219,7 @@ def calculate_and_plot_efficiency(base_path, uniform_subdirs, snr, outimg,
 
         ax.text(dim-1.0, 0.9, r'$m_{\rm limit}$='+'%2.2f'%float(x0))
         ax.text(dim-1.0, 0.85, f'SNR={snr}')
-        ax.text(dim-1.0, 0.8, f'Effieicny={eff_target}')
+        ax.text(dim-1.0, 0.8, f'Efficiecny={eff_target}')
 
         ax.vlines(x0, 0, 0.5, linestyle='dashed', color='red')
 
@@ -238,3 +231,71 @@ def calculate_and_plot_efficiency(base_path, uniform_subdirs, snr, outimg,
         print("Done.")
 
         return(x0)
+
+if __name__ == "__main__":
+
+    # Can call from command line on output data file to recompute efficiency
+    if len(sys.argv)<2:
+        print('Usage: Plot_Efficiency.py datafile')
+        sys.exit()
+
+    # Default parameters
+    eff_target=0.8
+    snr=3.0
+
+    bright = 18.0
+    dim = 24.0
+    bin_size = 0.2
+
+    model_mags = bright + bin_size*np.arange(int((dim-bright)/bin_size)+1)
+
+    filename = sys.argv[1]
+    if len(sys.argv)>2:
+        outimg = sys.argv[2]
+    else:
+        outimg = filename.replace('.dat','.png')
+
+    outdata = Table.read(sys.argv[1], format='ascii')
+
+    mag_cent, mag_effi, unweighted_minimize_result=compute_efficiency(
+            outdata, model_mags)
+
+    params = (unweighted_minimize_result.params['x0'].value,
+                  unweighted_minimize_result.params['a'].value,
+                  unweighted_minimize_result.params['n'].value
+            )
+
+    def efficiency(params, mag_bins):
+            x0, a, n = params
+            model_efficiency = n*(1.0-(erf(a*(mag_bins-x0))+1.0)/2.0)
+            return(model_efficiency)
+
+    # Given a set of params, compute magnitude where we get input efficiency
+    def compute_mag_limit(params, eff_target):
+            x0, a, n = params
+            mag_limit = x0 + erfinv(1.0 - 2.0*eff_target)/a
+            return(mag_limit)
+
+    print(mag_effi)
+    fig, ax = plt.subplots()
+
+    plot_mags = np.linspace(bright, dim, 4000)
+
+    ax.bar(mag_cent, mag_effi, bin_size, zorder=1, edgecolor='black')
+    model_eff = efficiency(params, plot_mags)
+    ax.plot(plot_mags, model_eff, zorder=10, color='red')
+
+    x0=compute_mag_limit(params, eff_target)
+
+    ax.text(dim-1.5, 0.95, r'$m_{\rm limit}$='+'%2.2f'%float(x0))
+    ax.text(dim-1.5, 0.9, f'SNR={snr}')
+    ax.text(dim-1.5, 0.85, f'Efficiecny={eff_target}')
+
+    ax.vlines(x0, 0, eff_target, linestyle='dashed', color='red')
+
+    ax.set_xlabel('Apparent Brightness (AB mag)')
+    ax.set_ylabel('Recovery Fraction per magnitude bin')
+
+    plt.savefig(outimg)
+
+    print("Done.")
