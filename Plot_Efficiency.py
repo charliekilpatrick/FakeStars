@@ -187,7 +187,7 @@ def calculate_and_plot_efficiency(base_path, uniform_subdirs, snr, outimg,
         outdata.write(outdatafile, overwrite=True, format='ascii')
 
         mag_cent, mag_effi, unweighted_minimize_result=compute_efficiency(
-            outdata)
+            outdata, model_mags)
 
         params = (unweighted_minimize_result.params['x0'].value,
                   unweighted_minimize_result.params['a'].value,
@@ -205,23 +205,21 @@ def calculate_and_plot_efficiency(base_path, uniform_subdirs, snr, outimg,
             mag_limit = x0 + erfinv(1.0 - 2.0*eff_target)/a
             return(mag_limit)
 
-        print(mag_effi)
         fig, ax = plt.subplots()
-        width=(dim-bright)/nbins
 
-        model_mags = np.linspace(bright, dim, 300)
+        plot_mags = np.linspace(bright, dim, 4000)
 
-        ax.bar(mag_cent, mag_effi, width, zorder=1, edgecolor='black')
-        model_eff = efficiency(params, model_mags)
-        ax.plot(model_mags, model_eff, zorder=10, color='red')
+        ax.bar(mag_cent, mag_effi, bin_size, zorder=1, edgecolor='black')
+        model_eff = efficiency(params, plot_mags)
+        ax.plot(plot_mags, model_eff, zorder=10, color='red')
 
         x0=compute_mag_limit(params, eff_target)
 
-        ax.text(dim-1.0, 0.9, r'$m_{\rm limit}$='+'%2.2f'%float(x0))
-        ax.text(dim-1.0, 0.85, f'SNR={snr}')
-        ax.text(dim-1.0, 0.8, f'Efficiecny={eff_target}')
+        ax.text(dim-1.5, 0.95, r'$m_{\rm limit}$='+'%2.2f'%float(x0))
+        ax.text(dim-1.5, 0.9, f'SNR={snr}')
+        ax.text(dim-1.5, 0.85, f'Efficiecny={eff_target}')
 
-        ax.vlines(x0, 0, 0.5, linestyle='dashed', color='red')
+        ax.vlines(x0, 0, eff_target, linestyle='dashed', color='red')
 
         ax.set_xlabel('Apparent Brightness (AB mag)')
         ax.set_ylabel('Recovery Fraction per magnitude bin')
@@ -276,7 +274,6 @@ if __name__ == "__main__":
             mag_limit = x0 + erfinv(1.0 - 2.0*eff_target)/a
             return(mag_limit)
 
-    print(mag_effi)
     fig, ax = plt.subplots()
 
     plot_mags = np.linspace(bright, dim, 4000)
