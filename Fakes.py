@@ -801,6 +801,10 @@ class AllStages():
             help='Filter to reduce, needed for file and directory structure')
         parser.add_option('--save-img', default=False, action="store_true",
             help='save the fake star subtraction images to another dir.')
+        parser.add_option('--target-efficiency', default=0.8, type=float,
+            help='target efficiency for modeling the efficiency curve.')
+        parser.add_option('--target-snr', default=3.0, type=float,
+            help='target S/N for modeling the efficiency curve.')
 
         return(parser)
 
@@ -815,7 +819,9 @@ if __name__ == "__main__":
     parser = allstages.add_options(usage=usagestring)
     options,  args = parser.parse_args()
 
-    detEff = DetermineEfficiencies(root_path=os.path.expandvars(options.root_path),
+    root_path = os.path.expandvars(options.root_path)
+
+    detEff = DetermineEfficiencies(root_path=root_path,
                                    log_base=options.log_base,
                                    work_base=options.work_base,
                                    image_dir=options.image_dir,
@@ -882,7 +888,8 @@ if __name__ == "__main__":
         print(f'out data: {outdata}')
 
         limit=Plot_Efficiency.calculate_and_plot_efficiency(work_path, [subdir],
-            3.0, outimg, outdata, bright=bright, dim=dim, eff_target=0.997)
+            options.target_snr, outimg, outdata, bright=bright, dim=dim,
+            eff_target=options.target_efficiency)
 
         fake_list=detEff.plant_fakes(image, options.fake_mag_range,
                 coord_list=options.coord_list,

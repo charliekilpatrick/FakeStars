@@ -53,7 +53,6 @@ def compute_efficiency(data, model_mags, perform_fit=True):
     for i in np.arange(len(model_mags)-1):
             mag_lo = model_mags[i]
             mag_hi = model_mags[i+1]
-            print(mag_lo, mag_hi)
             mag_cent.append((mag_lo+mag_hi)/2.0)
             mask = (data['sim_mag']<mag_hi) & (data['sim_mag']>mag_lo)
 
@@ -66,6 +65,8 @@ def compute_efficiency(data, model_mags, perform_fit=True):
                     if row['snr']>3.0:
                         detected += 1
                 mag_effi.append(1.0*detected/total)
+
+            print(mag_lo, mag_hi, mag_effi[i])
 
     params = Parameters()
     params.add('x0', value=21.5, min=10.0, max=25.0)
@@ -98,11 +99,11 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files):
     injected_data = Table.read(fakemag_file, format='ascii')
 
     outdata = Table([[0.],[0.],[0.],[0.],[0.],[0.],[0.],[0.],[0.],[0.],[0.],[0.],
-        [0.],[0],['X'*20],['X'*20]],
+        [0.],[0],['X'*20],['X'*20],['X'*100]],
         names=('x','y','sim_mag','det_mag','det_magerr','snr',
             'sim_flux','sim_psf_flux','sim_zpt',
             'det_flux','det_fluxerr','det_zpt','extendedness','Nmask','mask',
-            'flag')).copy()[:0]
+            'flag','image')).copy()[:0]
 
     for i,file in enumerate(dcmp_files):
 
@@ -121,10 +122,12 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files):
         subdata = injected_data[submask]
 
         for row in dcmp_data:
-            crossmatch = (subdata['x']-float(row['col0']))**2+(subdata['y']-float(row['col1']))**2<1.0
+            crossmatch = (subdata['x']-float(row['col0']))**2+\
+                (subdata['y']-float(row['col1']))**2<1.0
             if not len(subdata[crossmatch])==1:
                 print(f'ERROR WITH CROSSMATCH {file}')
-                x=float(row['col1']) ; y=float(row['col2']) ; n=len(subdata[crossmatch])
+                x=float(row['col1']) ; y=float(row['col2'])
+                n=len(subdata[crossmatch])
                 print(f'{image}')
                 print(f'x={x}, y={y}')
                 print(f'n={n}')
@@ -149,7 +152,7 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files):
                 sim_flux,sim_psf_flux,sim_zpt,
                 float(row['col4']),float(row['col5']),
                 zptmag,float(row['col18']),int(row['col21']),
-                str(row['col20']),str(row['col19'])])
+                str(row['col20']),str(row['col19']),file])
 
             outdata.add_row([float(row['col0']), float(row['col1']), sim_mag,
                 det_mag,float(row['col3']),
@@ -157,7 +160,7 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files):
                 sim_flux,sim_psf_flux,sim_zpt,
                 float(row['col4']),float(row['col5']),
                 zptmag,float(row['col18']),int(row['col21']),
-                str(row['col20']),str(row['col19'])])
+                str(row['col20']),str(row['col19']),file])
 
     return(outdata)
 

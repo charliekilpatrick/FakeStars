@@ -12,6 +12,7 @@ coord_list="coords/${image_dir}_coord_list.txt"
 fake_bright="18"
 fake_dim="24"
 num_stars=1500
+target_efficiency="0.8"
 
 start=$SECONDS
 
@@ -30,6 +31,7 @@ python ./Fakes.py \
 --coord_list ${coord_list} \
 --fake_mag_range ${fake_bright} ${fake_dim} ${num_stars} \
 --filter ${filter} \
+--target-efficiency ${target_efficiency} \
 --save-img
 
 duration=$(( SECONDS - start ))
