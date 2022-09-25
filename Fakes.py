@@ -912,10 +912,18 @@ if __name__ == "__main__":
                 os.makedirs(outdir)
 
             for file in fake_files:
-                basefile = os.path.basename(file)
-                outfile = os.path.join(outdir, basefile)
+                imgfile = file.replace('.diff.fits','.diff.im.fits')
 
-                shutil.copyfile(file, outfile)
+                basefile = os.path.basename(file)
+                baseimgfile = os.path.basename(imgfile)
+
+                outfile = os.path.join(outdir, basefile)
+                outimgfile = os.path.join(outdir, baseimgfile)
+
+                if os.path.exists(file):
+                    shutil.copyfile(file, outfile)
+                if os.path.exists(imgfile):
+                    shutil.copyfile(imgfile, outimgfile)
 
     limit_outfile.close()
 
