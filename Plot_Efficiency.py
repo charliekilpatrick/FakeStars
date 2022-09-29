@@ -94,7 +94,7 @@ def limiting_mag_model(input_mags, x0, a, n):
     return y
 
 
-def crossmatch_fake_stars(fakemag_file, dcmp_files):
+def crossmatch_fake_stars(fakemag_file, dcmp_files, masking=True):
 
     injected_data = Table.read(fakemag_file, format='ascii')
 
@@ -146,6 +146,12 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files):
             else:
                 snr = 0.0
 
+            if masking:
+                if np.isnan(float(row['col3']):
+                    continue
+                if np.isinf(float(row['col3']):
+                    continue
+
             print([float(row['col0']), float(row['col1']), sim_mag,
                 det_mag,float(row['col3']),
                 snr,
@@ -161,6 +167,14 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files):
                 float(row['col4']),float(row['col5']),
                 zptmag,float(row['col18']),int(row['col21']),
                 str(row['col20']),str(row['col19']),file])
+
+    if masking:
+        for file in np.unique(outdata['file']):
+            mask = outdata['file']==file
+            subdata = outdata[mask]
+            submask = subdata['snr']>3.0
+            if len(subdata[submask])==0:
+                outdata = outdata[~mask]
 
     return(outdata)
 
