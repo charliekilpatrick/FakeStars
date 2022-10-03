@@ -147,9 +147,9 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files, masking=True):
                 snr = 0.0
 
             if masking:
-                if np.isnan(float(row['col3']):
+                if np.isnan(float(row['col3'])):
                     continue
-                if np.isinf(float(row['col3']):
+                if np.isinf(float(row['col3'])):
                     continue
 
             print([float(row['col0']), float(row['col1']), sim_mag,
@@ -169,8 +169,8 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files, masking=True):
                 str(row['col20']),str(row['col19']),file])
 
     if masking:
-        for file in np.unique(outdata['file']):
-            mask = outdata['file']==file
+        for file in np.unique(outdata['image']):
+            mask = outdata['image']==file
             subdata = outdata[mask]
             submask = subdata['snr']>3.0
             if len(subdata[submask])==0:
