@@ -151,6 +151,8 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files, masking=True):
                     continue
                 if np.isinf(float(row['col3'])):
                     continue
+                if float(row['col3'])==0.0:
+                    continue
 
             print([float(row['col0']), float(row['col1']), sim_mag,
                 det_mag,float(row['col3']),
