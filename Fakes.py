@@ -677,7 +677,7 @@ class DetermineEfficiencies():
 
 
     def wait_for_fake_reductions(self, fake_diff_image_path, fake_list,
-        last_stage='DIFFIMSTATS'):
+        last_stage='DIFFIMSTATS', max_it=150):
 
         t0 = time.time()
 
@@ -697,6 +697,9 @@ class DetermineEfficiencies():
             elif last_stage=='DIFFIMSTATS':
                 check_list, num_done, message = self.diffimstats_check(
                     fake_diff_image_path, fakes, it=it)
+            # Basic condition for terminating if something goes wrong
+            if it>max_it:
+                break
 
 
             t1 = time.time()
@@ -890,6 +893,10 @@ if __name__ == "__main__":
         limit=Plot_Efficiency.calculate_and_plot_efficiency(work_path, [subdir],
             options.target_snr, outimg, outdata, bright=bright, dim=dim,
             eff_target=options.target_efficiency)
+
+        if not limit:
+            print(f'WARNING: an error occurred with limit calculation.')
+            continue
 
         fake_list=detEff.plant_fakes(image, options.fake_mag_range,
                 coord_list=options.coord_list,

@@ -193,6 +193,9 @@ def calculate_and_plot_efficiency(base_path, uniform_subdirs, snr, outimg,
         print("Processing sub dir: %s...\n%s dcmp files" % (sd,len(dcmp_files)))
         print("Glob: ",gl)
 
+        if len(dcmp_files)==0:
+            return(None)
+
         basedir = sd.replace('_tmpl','')
         logdir = base_path.replace('workspace','logs')
 
