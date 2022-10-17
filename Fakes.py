@@ -816,7 +816,7 @@ class AllStages():
             help='target efficiency for modeling the efficiency curve.')
         parser.add_option('--target-snr', default=3.0, type=float,
             help='target S/N for modeling the efficiency curve.')
-        parser.add_options('--use-diffimstats', default=False,
+        parser.add_option('--use-diffimstats', default=False,
             action='store_true', help='Use forced photometry from diffimstats')
 
         return(parser)
