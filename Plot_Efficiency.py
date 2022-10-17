@@ -94,22 +94,24 @@ def limiting_mag_model(input_mags, x0, a, n):
     return y
 
 
-def crossmatch_fake_stars(fakemag_file, dcmp_files, masking=True):
+def crossmatch_fake_stars(fakemag_file, dcmp_files, masking=True,
+    diffimstats=False, exten='fake.dcmp'):
 
     injected_data = Table.read(fakemag_file, format='ascii')
 
     outdata = Table([[0.],[0.],[0.],[0.],[0.],[0.],[0.],[0.],[0.],[0.],[0.],[0.],
-        [0.],[0],['X'*20],['X'*20],['X'*100]],
+        ['X'*100]],
         names=('x','y','sim_mag','det_mag','det_magerr','snr',
             'sim_flux','sim_psf_flux','sim_zpt',
-            'det_flux','det_fluxerr','det_zpt','extendedness','Nmask','mask',
-            'flag','image')).copy()[:0]
+            'det_flux','det_fluxerr','det_zpt','image')).copy()[:0]
 
     for i,file in enumerate(dcmp_files):
 
         print(f'File {i}')
 
-        hdu = fits.open(file, mode='readonly')
+        imfile = file.replace(exten, 'fits')
+
+        hdu = fits.open(imfile, mode='readonly')
         print('Got header')
         test=np.loadtxt(file, skiprows=1, dtype=str)
         dcmp_data = Table(test)
@@ -140,35 +142,37 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files, masking=True):
             sim_flux = float('%6.3f'%float(data['flux']))
             sim_psf_flux = float('%6.3f'%float(data['psf_flux']))
             sim_zpt = float('%2.3f'%float(data['zpt']))
-            det_mag = float('%2.3f'%(float(row['col2'])+zptmag))
-            if float(row['col5'])!=0.0:
-                snr = float('%5.4f'%(float(row['col4'])/float(row['col5'])))
+            x = float(row['col0'])
+            y = float(row['col1'])
+
+            if not diffimstats:
+                flux = float(row['col4'])
+                flux_err = float(row['col5'])
+            else:
+                flux = float(row['col2'])
+                flux_err = float(row['col3'])
+
+            det_mag = float('%2.3f'%(-2.5*np.log10(flux)+zptmag))
+            det_magerr = float('%2.3f'%(1.086 * fluxerr/flux))
+
+            if flux_err!=0.0:
+                snr = float('%5.4f'%(flux/flux_err))
             else:
                 snr = 0.0
 
             if masking:
-                if np.isnan(float(row['col3'])):
+                if np.isnan(det_magerr):
                     continue
-                if np.isinf(float(row['col3'])):
+                if np.isinf(det_magerr):
                     continue
-                if float(row['col3'])==0.0:
+                if float(det_magerr)==0.0:
                     continue
 
-            print([float(row['col0']), float(row['col1']), sim_mag,
-                det_mag,float(row['col3']),
-                snr,
-                sim_flux,sim_psf_flux,sim_zpt,
-                float(row['col4']),float(row['col5']),
-                zptmag,float(row['col18']),int(row['col21']),
-                str(row['col20']),str(row['col19']),file])
+            print([x, y, sim_mag, det_mag,det_magerr, snr, sim_flux,
+                sim_psf_flux,sim_zpt, flux,flux_err, zptmag,file])
 
-            outdata.add_row([float(row['col0']), float(row['col1']), sim_mag,
-                det_mag,float(row['col3']),
-                snr,
-                sim_flux,sim_psf_flux,sim_zpt,
-                float(row['col4']),float(row['col5']),
-                zptmag,float(row['col18']),int(row['col21']),
-                str(row['col20']),str(row['col19']),file])
+            outdata.add_row([x, y, sim_mag, det_mag, det_magerr, snr, sim_flux,
+                sim_psf_flux,sim_zpt, flux,flux_err, zptmag,file])
 
     if masking:
         for file in np.unique(outdata['image']):
@@ -182,9 +186,12 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files, masking=True):
 
 def calculate_and_plot_efficiency(base_path, uniform_subdirs, snr, outimg,
     outdatafile, dcmp_type="fake.dcmp", bright=19.0, dim=24.0, bin_size=0.2,
-    eff_target=0.5):
+    eff_target=0.5, diffimstats=False):
 
     model_mags = bright + bin_size*np.arange(int((dim-bright)/bin_size)+1)
+
+    if diffimstats:
+        dcmp_type = "forcedgrid.diffimstats"
 
     for sd in uniform_subdirs:
 
@@ -205,7 +212,8 @@ def calculate_and_plot_efficiency(base_path, uniform_subdirs, snr, outimg,
             print(f'ERROR: {fakemag_file} does not exist')
             raise Exception('STOP!')
 
-        outdata = crossmatch_fake_stars(fakemag_file, dcmp_files)
+        outdata = crossmatch_fake_stars(fakemag_file, dcmp_files,
+            diffimstats=diffimstats, exten=dcmp_type)
         outdata.write(outdatafile, overwrite=True, format='ascii')
 
         mag_cent, mag_effi, unweighted_minimize_result=compute_efficiency(

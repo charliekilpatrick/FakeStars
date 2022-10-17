@@ -106,6 +106,7 @@ class DetermineEfficiencies():
 
         self.filter = filt
 
+        self.coord_list = ''
         self.coord_xy_list = ''
 
         self.filter = ''
@@ -559,7 +560,7 @@ class DetermineEfficiencies():
                     dx = dy = int((max_size - 1) / 2)
 
                     # Add a jitter to the position of order 0.1 * fwhm size
-                    mu, sigma = 0., 0.05 * fwhm / 2.355
+                    mu, sigma = 0., 0.0005 * fwhm / 2.355
                     sx, sy = np.random.normal(mu, sigma, 2)
 
                     flux = np.sum(psf_model * psf_flux)
@@ -622,11 +623,18 @@ class DetermineEfficiencies():
 
         return(fake_list)
 
-    def run_fake_reductions(self, fake_image_dir, filt, redo='-redo'):
+    def run_fake_reductions(self, fake_image_dir, filt, redo='-redo',
+        diffimstats=False):
 
         cmd = f'eventloop.pl -events {fake_image_dir} {filt} '
         cmd += f'-stage MATCHTEMPL,DIFFIM,DIFFIMSTATS {redo} -condor '
         cmd += '-k BATCH_OPTIONS \'-maxcpus 8\''
+
+        if diffimstats:
+            assert self.coord_list != ''
+            assert os.path.exists(self.coord_list)
+            cmd += ' -k DIS_OPTIONS \'--dMmax 0.03 --customlist '
+            cmd += f' {self.coord_list}\''
 
         os.system(cmd)
 
@@ -808,6 +816,8 @@ class AllStages():
             help='target efficiency for modeling the efficiency curve.')
         parser.add_option('--target-snr', default=3.0, type=float,
             help='target S/N for modeling the efficiency curve.')
+        parser.add_options('--use-diffimstats', default=False,
+            action='store_true', help='Use forced photometry from diffimstats')
 
         return(parser)
 
@@ -841,6 +851,9 @@ if __name__ == "__main__":
 
     detEff.filter = options.filter
 
+    if options.coord_list and os.path.exists(options.coord_list):
+        detEff.coord_list = options.coord_list
+
     t0 = time.time()
 
     limit_outfile = open('{0}_{1}_limits.dat'.format(detEff.image_dir.strip(),
@@ -862,7 +875,8 @@ if __name__ == "__main__":
         detEff.edit_logs(image, copy.copy(fake_list))
 
         # Run slurm job for fake images
-        detEff.run_fake_reductions(detEff.fake_image_dir, options.filter)
+        detEff.run_fake_reductions(detEff.fake_image_dir, options.filter,
+            diffimstats=options.use_diffimstats)
 
         # Check for fake images done
         detEff.wait_for_fake_reductions(detEff.fake_diff_image_path,
@@ -892,7 +906,8 @@ if __name__ == "__main__":
 
         limit=Plot_Efficiency.calculate_and_plot_efficiency(work_path, [subdir],
             options.target_snr, outimg, outdata, bright=bright, dim=dim,
-            eff_target=options.target_efficiency)
+            eff_target=options.target_efficiency,
+            diffimstats=options.use_diffimstats)
 
         if not limit:
             print(f'WARNING: an error occurred with limit calculation.')
