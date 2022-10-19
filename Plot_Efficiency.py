@@ -118,7 +118,12 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files, masking=True,
         print(f'Loaded file {file}')
 
         image = hdu[0].header['IMNAME']
-        zptmag = float(hdu[0].header['ZPTMAGAV'])
+        if 'ZPTMAGAV' in hdu[0].header.keys():
+            zptmag = float(hdu[0].header['ZPTMAGAV'])
+        elif 'MAGZERO' in hdu[0].header.keys():
+            zptmag = float(hdu[0].header['MAGZERO'])
+        else:
+            raise Exception('NO ZERO POINT. STOP!')
 
         submask = np.array([image in f for f in injected_data['imagefile']])
         subdata = injected_data[submask]

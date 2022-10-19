@@ -882,8 +882,9 @@ if __name__ == "__main__":
         detEff.wait_for_fake_reductions(detEff.fake_diff_image_path,
             copy.copy(fake_list))
 
-        detEff.run_forcedophot(detEff.fake_diff_image_path,
-            copy.copy(fake_list), options.filter)
+        if not options.use_diffimstats:
+            detEff.run_forcedophot(detEff.fake_diff_image_path,
+                copy.copy(fake_list), options.filter)
 
         fake_diff_dir = "{0}_fake_tmpl".format(detEff.image_dir)
         subdir = os.path.join(fake_diff_dir, options.filter)
