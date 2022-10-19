@@ -133,7 +133,7 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files, masking=True,
                 (subdata['y']-float(row['col1']))**2<1.0
             if not len(subdata[crossmatch])==1:
                 print(f'ERROR WITH CROSSMATCH {file}')
-                x=float(row['col1']) ; y=float(row['col2'])
+                x=float(row['col0']) ; y=float(row['col1'])
                 n=len(subdata[crossmatch])
                 print(f'{image}')
                 print(f'x={x}, y={y}')
@@ -268,66 +268,14 @@ def calculate_and_plot_efficiency(base_path, uniform_subdirs, snr, outimg,
 if __name__ == "__main__":
 
     # Can call from command line on output data file to recompute efficiency
-    if len(sys.argv)<2:
-        print('Usage: Plot_Efficiency.py datafile')
+    if len(sys.argv)<3:
+        print('Usage: Plot_Efficiency.py work_path subdir')
         sys.exit()
 
     # Default parameters
-    eff_target=0.8
-    snr=3.0
+    target_snr = 3.0
+    work_path = sys.argv[1]
+    subdir = sys.argv[2]
 
-    bright = 18.0
-    dim = 24.0
-    bin_size = 0.2
-
-    model_mags = bright + bin_size*np.arange(int((dim-bright)/bin_size)+1)
-
-    filename = sys.argv[1]
-    if len(sys.argv)>2:
-        outimg = sys.argv[2]
-    else:
-        outimg = filename.replace('.dat','.png')
-
-    outdata = Table.read(sys.argv[1], format='ascii')
-
-    mag_cent, mag_effi, unweighted_minimize_result=compute_efficiency(
-            outdata, model_mags)
-
-    params = (unweighted_minimize_result.params['x0'].value,
-                  unweighted_minimize_result.params['a'].value,
-                  unweighted_minimize_result.params['n'].value
-            )
-
-    def efficiency(params, mag_bins):
-            x0, a, n = params
-            model_efficiency = n*(1.0-(erf(a*(mag_bins-x0))+1.0)/2.0)
-            return(model_efficiency)
-
-    # Given a set of params, compute magnitude where we get input efficiency
-    def compute_mag_limit(params, eff_target):
-            x0, a, n = params
-            mag_limit = x0 + erfinv(1.0 - 2.0*eff_target)/a
-            return(mag_limit)
-
-    fig, ax = plt.subplots()
-
-    plot_mags = np.linspace(bright, dim, 4000)
-
-    ax.bar(mag_cent, mag_effi, bin_size, zorder=1, edgecolor='black')
-    model_eff = efficiency(params, plot_mags)
-    ax.plot(plot_mags, model_eff, zorder=10, color='red')
-
-    x0=compute_mag_limit(params, eff_target)
-
-    ax.text(dim-1.5, 0.95, r'$m_{\rm limit}$='+'%2.2f'%float(x0))
-    ax.text(dim-1.5, 0.9, f'SNR={snr}')
-    ax.text(dim-1.5, 0.85, f'Efficiecny={eff_target}')
-
-    ax.vlines(x0, 0, eff_target, linestyle='dashed', color='red')
-
-    ax.set_xlabel('Apparent Brightness (AB mag)')
-    ax.set_ylabel('Recovery Fraction per magnitude bin')
-
-    plt.savefig(outimg)
-
-    print("Done.")
+    limit=calculate_and_plot_efficiency(work_path, [subdir],
+            target_snr, 'test', 'test1', diffimstats=True)
