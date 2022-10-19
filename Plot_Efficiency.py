@@ -161,7 +161,7 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files, masking=True,
                 flux_err = float(row['col3'])
 
             det_mag = float('%2.3f'%(-2.5*np.log10(flux)+zptmag))
-            det_magerr = float('%2.3f'%(1.086 * fluxerr/flux))
+            det_magerr = float('%2.3f'%(1.086 * flux_err/flux))
 
             if flux_err!=0.0:
                 snr = float('%5.4f'%(flux/flux_err))

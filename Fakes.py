@@ -634,8 +634,9 @@ class DetermineEfficiencies():
         if diffimstats:
             assert self.coord_list != ''
             assert os.path.exists(self.coord_list)
+            coord_list = os.path.abspath(self.coord_list)
             cmd += ' -k DIS_OPTIONS \'--dMmax 0.03 --customlist '
-            cmd += f' {self.coord_list} --jitter 0.0\''
+            cmd += f' {coord_list} --jitter 0.0\''
 
         os.system(cmd)
 
