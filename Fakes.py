@@ -685,7 +685,7 @@ class DetermineEfficiencies():
 
 
     def wait_for_fake_reductions(self, fake_diff_image_path, fake_list,
-        last_stage='DIFFIMSTATS', max_it=150):
+        last_stage='DIFFIMSTATS', max_it=100, time_sleep=40):
 
         t0 = time.time()
 
@@ -722,12 +722,12 @@ class DetermineEfficiencies():
                 if num_done > 0 and num_done==last_done:
                     self.run_fake_reductions(self.fake_image_dir, self.filter,
                         redo='-redobad')
-                    time.sleep(30)
+                    time.sleep(time_sleep)
                     it=it+1
                     continue
                 else:
                     it=it+1
-                    time.sleep(10)
+                    time.sleep(time_sleep)
 
             last_done = num_done
 
