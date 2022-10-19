@@ -128,6 +128,9 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files, masking=True,
         submask = np.array([image in f for f in injected_data['imagefile']])
         subdata = injected_data[submask]
 
+        print(subdata)
+        print(fakemag_file)
+
         for row in dcmp_data:
             crossmatch = (subdata['x']-float(row['col0']))**2+\
                 (subdata['y']-float(row['col1']))**2<1.0
