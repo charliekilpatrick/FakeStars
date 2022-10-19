@@ -490,14 +490,15 @@ class DetermineEfficiencies():
             fwhm = dcmp_header['FWHM']
 
             fake_x = [] ; fake_y = []
-            for row in table:
-                coord = parse_coord(row['ra'], row['dec'])
-                ra = coord.ra.degree ; dec = coord.dec.degree
-                img_coord = w.all_world2pix([[ra, dec]], 1)
-                x = img_coord[0][0]
-                y = img_coord[0][1]
-                fake_x.append(x)
-                fake_y.append(y)
+            ra,dec = np.loadtxt(coord_list,unpack=True,dtype=str)
+            try:
+                ra,dec = ra.astype(float),dec.astype(float)
+                sc = SkyCoord(ra,dec,unit=u.deg)
+            except:
+                sc = SkyCoord(ra,dec,unit=(u.hour,u.deg))
+            xpos,ypos = w.wcs_world2pix(sc.ra.deg,sc.dec.deg,0)
+            for x,y in zip(xpos, ypos):
+                fake_x.append(x) ; fake_y.append(y)
 
             print("Opening: %s" % file_association.image_mask_file)
             mask_hdu = fits.open(file_association.image_mask_file)
@@ -634,7 +635,7 @@ class DetermineEfficiencies():
             assert self.coord_list != ''
             assert os.path.exists(self.coord_list)
             cmd += ' -k DIS_OPTIONS \'--dMmax 0.03 --customlist '
-            cmd += f' {self.coord_list}\''
+            cmd += f' {self.coord_list}\' --jitter 0.0'
 
         os.system(cmd)
 
