@@ -1,6 +1,6 @@
 #!/bin/bash
 
-root_path="/lustre/hpc/storage/dark/YSE/data"
+root_path=$PIPE_DATA
 log_base="logs"
 work_base="workspace"
 image_dir=$1
@@ -32,7 +32,5 @@ python ./Fakes.py \
 --fake_mag_range ${fake_bright} ${fake_dim} ${num_stars} \
 --filter ${filter} \
 --target-efficiency ${target_efficiency} \
---save-img
-
-duration=$(( SECONDS - start ))
-echo "Full process elapsed: ${duration} sec."
+--save-img \
+--use-diffimstats

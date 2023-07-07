@@ -5,7 +5,7 @@ if [[ ! -d "lists" ]]; then
 	mkdir lists
 fi
 
-workdir="/lustre/hpc/storage/dark/YSE/data/workspace"
+workdir="$PIPE_DATA/workspace"
 obj=$1
 
 for dir in `ls -d $workdir/$obj/*/`; do

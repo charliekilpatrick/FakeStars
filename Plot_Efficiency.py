@@ -142,7 +142,7 @@ def crossmatch_fake_stars(fakemag_file, dcmp_files, masking=True,
                 print(f'n={n}')
                 print(subdata[crossmatch]['x','y','mag'])
                 print(cross_radius)
-                raise Exception('STOP!')
+                continue
 
             data = subdata[crossmatch][0]
 

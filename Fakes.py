@@ -430,6 +430,9 @@ class DetermineEfficiencies():
         return file_associations
 
     def append_fake_mag_file(self, line):
+        if not os.path.isfile(self.fake_mag_file):
+            with open(self.fake_mag_file, 'w') as fout:
+               	print('# dcmpfile imagefile x y mag flux psf_flux zpt',file=fout)
         with open(self.fake_mag_file, 'a') as fout:
             print(line, file=fout)
 
